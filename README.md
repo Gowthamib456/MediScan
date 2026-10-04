@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MediScan – Clinical Context Integration in Medical Imaging
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
@@ -112,3 +113,7 @@ MediScan/
 ## 📜 Medical Safety Disclaimer
 
 > **MediScan** provides AI-assisted clinical decision support and does **NOT** replace professional medical judgment. All predictions, confidence scores, and risk classifications are designed for qualified healthcare provider review only.
+=======
+# MediScan
+AI-powered medical imaging system integrating medical images and clinical context for disease prediction and analysis.
+>>>>>>> 2378a17a8b10fde06af24b8b557a2ebfa699833c
