@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-user-shield text-primary me-2"></i> System Administration</h2>
+        <p class="text-secondary fs-7 m-0">Global User Access Control, Hospital Setup, Model Metrics & Security Audit Logs</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="fa-solid fa-user-plus me-1"></i> Register New System User
+    </button>
+</div>
+
+<!-- Admin Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card glass-card p-3 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-secondary fs-7 fw-medium">Total Registered Users</div>
+                    <h3 class="fw-bold my-1" id="statUsersCount">--</h3>
+                    <div class="fs-7 text-primary">Multi-Role RBAC Active</div>
+                </div>
+                <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle"><i class="fa-solid fa-users fa-xl"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card glass-card p-3 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-secondary fs-7 fw-medium">Affiliated Hospitals</div>
+                    <h3 class="fw-bold my-1" id="statHospitalsCount">--</h3>
+                    <div class="fs-7 text-info">Multi-Hospital Support</div>
+                </div>
+                <div class="p-3 bg-info bg-opacity-10 text-info rounded-circle"><i class="fa-solid fa-hospital fa-xl"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card glass-card p-3 border-start border-4 border-success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-secondary fs-7 fw-medium">Active AI Model</div>
+                    <h3 class="fw-bold my-1 fs-5 text-truncate" id="statActiveModel">ResNet-50</h3>
+                    <div class="fs-7 text-success">Feature-Level Fusion v1.2</div>
+                </div>
+                <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle"><i class="fa-solid fa-brain fa-xl"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card glass-card p-3 border-start border-4 border-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-secondary fs-7 fw-medium">Audit Events Logged</div>
+                    <h3 class="fw-bold my-1" id="statAuditCount">--</h3>
+                    <div class="fs-7 text-warning">Tamper-Resistant Log</div>
+                </div>
+                <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle"><i class="fa-solid fa-shield-halved fa-xl"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs border-secondary mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#usersTab"><i class="fa-solid fa-users me-1"></i> User Management</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#hospitalsTab"><i class="fa-solid fa-hospital me-1"></i> Hospitals</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#auditTab"><i class="fa-solid fa-list-check me-1"></i> Audit Logs</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#metricsTab"><i class="fa-solid fa-chart-line me-1"></i> Model Performance Tracking</button></li>
+</ul>
+
+<div class="tab-content">
+    <!-- User Management Tab -->
+    <div class="tab-pane fade show active" id="usersTab">
+        <div class="card glass-card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Hospital</th>
+                            <th>Status</th>
+                            <th>Registered</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading system users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hospitals Tab -->
+    <div class="tab-pane fade" id="hospitalsTab">
+        <div class="card glass-card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Hospital Name</th>
+                            <th>Code</th>
+                            <th>Contact Email</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hospitalsTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading hospitals...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Logs Tab -->
+    <div class="tab-pane fade" id="auditTab">
+        <div class="card glass-card p-3">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 fs-7">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User ID</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Resource</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading audit logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Performance Tracking Tab -->
+    <div class="tab-pane fade" id="metricsTab">
+        <div class="card glass-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-area text-success me-2"></i> Model Validation Metrics (NIH Test Benchmark)</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Target Disease Class</th>
+                            <th>Accuracy</th>
+                            <th>Precision</th>
+                            <th>Recall</th>
+                            <th>F1 Score</th>
+                            <th>Sensitivity</th>
+                            <th>Specificity</th>
+                            <th>ROC-AUC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metricsTableBody">
+                        <tr><td colspan="8" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Fetching evaluation metrics...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New User -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal border border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-user-plus text-primary me-2"></i> Register System User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="submitNewUser(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Full Name</label>
+                        <input type="text" class="form-control" id="newFullName" required placeholder="Dr. Sarah Jenkins">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Email Address</label>
+                        <input type="email" class="form-control" id="newEmail" required placeholder="sarah@mediscan.org">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Password</label>
+                        <input type="password" class="form-control" id="newPassword" required placeholder="••••••••">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Role</label>
+                        <select class="form-select" id="newRole" required>
+                            <option value="1">ADMIN</option>
+                            <option value="2" selected>DOCTOR</option>
+                            <option value="3">VIEWER</option>
+                            <option value="4">PATIENT</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+    loadHospitals();
+    loadAuditLogs();
+    loadMetrics();
+});
+
+function loadUsers() {
+    fetch('/api/admin/users')
+        .then(r => r.json())
+        .then(data => {
+            const users = data.users || [];
+            document.getElementById('statUsersCount').innerText = users.length;
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td><code>#${u.id}</code></td>
+                    <td class="fw-semibold">${u.full_name}</td>
+                    <td>${u.email}</td>
+                    <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${u.role_name}</span></td>
+                    <td>${u.hospital_name}</td>
+                    <td><span class="badge bg-success-subtle text-success">${u.status}</span></td>
+                    <td class="fs-7 text-muted">${u.created_at}</td>
+                </tr>
+            `).join('');
+        });
+}
+
+function loadHospitals() {
+    fetch('/api/admin/hospitals')
+        .then(r => r.json())
+        .then(data => {
+            const hospitals = data.hospitals || [];
+            document.getElementById('statHospitalsCount').innerText = hospitals.length;
+            const tbody = document.getElementById('hospitalsTableBody');
+            tbody.innerHTML = hospitals.map(h => `
+                <tr>
+                    <td>#${h.id}</td>
+                    <td class="fw-bold">${h.name}</td>
+                    <td><code>${h.code}</code></td>
+                    <td>${h.contact_email || 'N/A'}</td>
+                    <td>${h.phone || 'N/A'}</td>
+                    <td class="fs-7">${h.address || 'N/A'}</td>
+                </tr>
+            `).join('');
+        });
+}
+
+function loadAuditLogs() {
+    fetch('/api/admin/audit-logs')
+        .then(r => r.json())
+        .then(data => {
+            const logs = data.audit_logs || [];
+            document.getElementById('statAuditCount').innerText = logs.length;
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td>${l.timestamp}</td>
+                    <td>User #${l.user_id || 'Sys'}</td>
+                    <td><span class="badge bg-secondary">${l.role || 'SYS'}</span></td>
+                    <td class="fw-semibold text-info">${l.action}</td>
+                    <td>${l.resource_type || ''} #${l.resource_id || ''}</td>
+                    <td><code>${l.ip_address}</code></td>
+                </tr>
+            `).join('');
+        });
+}
+
+function loadMetrics() {
+    fetch('/api/admin/model-performance')
+        .then(r => r.json())
+        .then(data => {
+            const models = data.models || [];
+            if (models.length > 0 && models[0].metrics) {
+                const tbody = document.getElementById('metricsTableBody');
+                tbody.innerHTML = models[0].metrics.map(m => `
+                    <tr>
+                        <td class="fw-bold text-start">${m.disease_class}</td>
+                        <td>${(m.accuracy * 100).toFixed(1)}%</td>
+                        <td>${(m.precision * 100).toFixed(1)}%</td>
+                        <td>${(m.recall * 100).toFixed(1)}%</td>
+                        <td class="fw-bold text-success">${(m.f1_score * 100).toFixed(1)}%</td>
+                        <td>${(m.sensitivity * 100).toFixed(1)}%</td>
+                        <td>${(m.specificity * 100).toFixed(1)}%</td>
+                        <td class="fw-bold text-primary">${(m.roc_auc * 100).toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+            }
+        });
+}
+
+function submitNewUser(e) {
+    e.preventDefault();
+    const full_name = document.getElementById('newFullName').value;
+    const email = document.getElementById('newEmail').value;
+    const password = document.getElementById('newPassword').value;
+    const role_id = document.getElementById('newRole').value;
+
+    fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name, email, password, role_id })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.user) {
+            showAlert('User created successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            loadUsers();
+        } else {
+            showAlert(data.message || data.error, 'danger');
+        }
+    });
+}
+</script>
+{% endblock %}

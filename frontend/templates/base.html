@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MediScan - Clinical Context Integration in Medical Imaging{% endblock %}</title>
+    
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#070B14">
+    <meta name="description" content="AI-Powered Clinical Decision Support System combining Medical Imaging and Patient Clinical Context using ResNet-50 Feature Level Fusion.">
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom MediScan Design System CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Main Navigation Bar -->
+    <nav class="navbar navbar-expand-lg sticky-top border-bottom border-secondary-subtle glass-nav">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary" href="/">
+                <i class="fa-solid fa-heart-pulse fa-lg text-info"></i>
+                <span class="fs-4 tracking-tight">Medi<span class="text-light">Scan</span></span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if session.get('user_id') %}
+                        {% if session.get('role_name') == 'ADMIN' %}
+                            <li class="nav-item"><a class="nav-link" href="/admin/dashboard"><i class="fa-solid fa-gauge me-1"></i> Admin Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/doctor/dashboard"><i class="fa-solid fa-stethoscope me-1"></i> Doctor View</a></li>
+                        {% elif session.get('role_name') in ['DOCTOR', 'VIEWER'] %}
+                            <li class="nav-item"><a class="nav-link" href="/doctor/dashboard"><i class="fa-solid fa-gauge me-1"></i> Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/doctor/patients"><i class="fa-solid fa-hospital-user me-1"></i> Patients</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/doctor/upload-scan"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Scan</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/doctor/reports"><i class="fa-solid fa-file-medical me-1"></i> Reports</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/doctor/analytics"><i class="fa-solid fa-chart-line me-1"></i> Analytics</a></li>
+                        {% elif session.get('role_name') == 'PATIENT' %}
+                            <li class="nav-item"><a class="nav-link" href="/patient/dashboard"><i class="fa-solid fa-user-doctor me-1"></i> Patient Portal</a></li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Theme Toggle -->
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                        <i class="fa-solid fa-sun" id="themeIcon"></i>
+                    </button>
+                    
+                    <!-- Keyboard Shortcuts Helper -->
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#keyboardShortcutModal" title="Keyboard Shortcuts (Press ?)">
+                        <i class="fa-solid fa-keyboard"></i>
+                    </button>
+
+                    {% if session.get('user_id') %}
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-secondary-subtle border border-secondary-subtle btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-circle-user text-primary"></i>
+                                <span>{{ session.get('full_name') }}</span>
+                                <span class="badge bg-info text-dark rounded-pill">{{ session.get('role_name') }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><span class="dropdown-item-text text-muted fs-7">Hospital: {{ session.get('hospital_name', 'Metro Health') }}</span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="/login" class="btn btn-primary btn-sm px-3"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Medical Safety Disclaimer Banner -->
+    <div class="bg-warning-subtle text-warning-emphasis border-bottom border-warning-subtle py-1 fs-7 text-center fw-medium">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+        <span>MediScan provides AI-assisted clinical decision support and does not replace professional medical judgment.</span>
+    </div>
+
+    <!-- Container for Flash / Alerts -->
+    <div class="container-fluid px-4 mt-3" id="alertContainer"></div>
+
+    <!-- Main Content Block -->
+    <main class="container-fluid px-4 py-3">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Keyboard Shortcut Help Modal -->
+    <div class="modal fade" id="keyboardShortcutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal border border-secondary">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title"><i class="fa-solid fa-keyboard text-primary me-2"></i> Keyboard Shortcuts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent d-flex justify-content-between text-light"><span>Search Patients / Scans</span> <kbd>S</kbd></li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between text-light"><span>Go to Main Dashboard</span> <kbd>D</kbd></li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between text-light"><span>Download PDF Report</span> <kbd>R</kbd></li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between text-light"><span>Toggle Help Dialog</span> <kbd>?</kbd></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js?v=2"></script>
+    <script src="/static/js/speech.js"></script>
+    <script src="/static/js/pwa.js?v=2"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Details - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-id-card text-info me-2"></i> Patient Details</h2>
+        <p class="text-secondary fs-7 m-0">Complete patient profile, scans, reports, and clinical timeline</p>
+    </div>
+    <a href="/doctor/dashboard" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard</a>
+</div>
+
+<div id="patientDetailError" class="alert alert-danger d-none"></div>
+<div id="patientDetailLoading" class="card glass-card p-5 text-center text-muted"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading patient details...</div>
+<div id="patientDetailContent" class="d-none">
+    <div class="card glass-card p-4 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <div class="text-secondary fs-7">Patient</div>
+                <h3 class="fw-bold m-0" id="detailName"></h3>
+                <code id="detailPatientId"></code>
+            </div>
+            <span class="badge bg-info-subtle text-info border border-info-subtle" id="detailGender"></span>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="text-secondary fs-7">Date of Birth</div><div id="detailDob"></div></div>
+            <div class="col-6 col-md-3"><div class="text-secondary fs-7">Blood Group</div><div id="detailBlood"></div></div>
+            <div class="col-12 col-md-3"><div class="text-secondary fs-7">Email</div><div id="detailEmail" class="text-break"></div></div>
+            <div class="col-12 col-md-3"><div class="text-secondary fs-7">Phone</div><div id="detailPhone"></div></div>
+            <div class="col-12 col-md-4"><div class="text-secondary fs-7">Medical History</div><div id="detailHistory"></div></div>
+            <div class="col-12 col-md-4"><div class="text-secondary fs-7">Allergies</div><div id="detailAllergies"></div></div>
+            <div class="col-12 col-md-4"><div class="text-secondary fs-7">Existing Conditions</div><div id="detailConditions"></div></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-7">
+            <div class="card glass-card p-4 h-100">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-file-medical text-primary me-2"></i> Reports</h5>
+                <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Date</th><th>Diagnosis</th><th>Risk</th><th></th></tr></thead><tbody id="detailReports"></tbody></table></div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-5">
+            <div class="card glass-card p-4 h-100">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-timeline text-info me-2"></i> Medical Timeline</h5>
+                <div class="timeline-list" id="detailTimeline"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const patientId = {{ patient_id }};
+const valueOrNone = value => value || 'Not recorded';
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetch(`/api/patients/${patientId}`)
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || data.error || `Unable to load patient (${response.status})`);
+            return data.patient;
+        })
+        .then(patient => {
+            document.getElementById('detailName').innerText = patient.full_name;
+            document.getElementById('detailPatientId').innerText = patient.unique_patient_id;
+            document.getElementById('detailGender').innerText = valueOrNone(patient.gender);
+            document.getElementById('detailDob').innerText = valueOrNone(patient.dob);
+            document.getElementById('detailBlood').innerText = valueOrNone(patient.blood_group);
+            document.getElementById('detailEmail').innerText = valueOrNone(patient.email);
+            document.getElementById('detailPhone').innerText = valueOrNone(patient.phone);
+            document.getElementById('detailHistory').innerText = valueOrNone(patient.medical_history);
+            document.getElementById('detailAllergies').innerText = valueOrNone(patient.allergies);
+            document.getElementById('detailConditions').innerText = valueOrNone(patient.existing_conditions);
+            const reports = patient.reports || [];
+            document.getElementById('detailReports').innerHTML = reports.length ? reports.map(report => `<tr><td>${report.finalized_at || report.created_at}</td><td class="fw-semibold">${report.doctor_final_diagnosis}</td><td>${report.risk_level}</td><td><a class="btn btn-sm btn-success" href="/api/reports/${report.id}/pdf"><i class="fa-solid fa-file-pdf"></i></a></td></tr>`).join('') : '<tr><td colspan="4" class="text-muted">No reports recorded.</td></tr>';
+            const timeline = patient.timeline || [];
+            document.getElementById('detailTimeline').innerHTML = timeline.length ? timeline.map(event => `<div class="timeline-item"><div class="fw-semibold">${event.title}</div><div class="fs-7 text-secondary">${event.description || ''}</div><div class="fs-8 text-muted">${event.event_date}</div></div>`).join('') : '<div class="text-muted">No timeline events recorded.</div>';
+            document.getElementById('patientDetailLoading').classList.add('d-none');
+            document.getElementById('patientDetailContent').classList.remove('d-none');
+        })
+        .catch(error => {
+            document.getElementById('patientDetailLoading').classList.add('d-none');
+            const errorBox = document.getElementById('patientDetailError');
+            errorBox.innerText = error.message;
+            errorBox.classList.remove('d-none');
+        });
+});
+</script>
+{% endblock %}

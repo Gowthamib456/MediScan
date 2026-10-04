@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Medical Scan - MediScan AI Clinical Fusion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-9">
+        <div class="card glass-card p-4 p-md-5">
+            <h3 class="fw-bold mb-1"><i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i> Upload Medical Image & Enter Clinical Context</h3>
+            <p class="text-secondary fs-7 mb-4">Supported Modalities: Chest X-Ray, CT Scan, MRI (JPG, PNG, DICOM format)</p>
+
+            <form id="uploadScanForm" onsubmit="submitScanUpload(event)">
+                <!-- 1. Patient Selection -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold fs-7">Select Patient *</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="patientSelect" required>
+                            <option value="">-- Choose Patient --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold fs-7">Scan Modality *</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="scanType" required>
+                            <option value="X-ray" selected>X-ray</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="MRI">MRI</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold fs-7">Body Region</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="bodyPart">
+                            <option value="Chest" selected>Chest / Lungs</option>
+                            <option value="Brain">Brain / Head</option>
+                            <option value="Abdomen">Abdomen</option>
+                            <option value="Pelvis">Pelvis / Hip</option>
+                            <option value="Spine">Spine / Back</option>
+                            <option value="Extremity">Arm / Leg / Hand / Foot</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 2. Medical Image File Upload (Drag & Drop Zone) -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold fs-7">Medical Scan Image File *</label>
+                    <div class="dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-file-medical fa-3x text-primary mb-2"></i>
+                        <h6 class="fw-bold">Drag & Drop Scan File Here or Click to Browse</h6>
+                        <p class="text-secondary fs-7 mb-0">Supported formats: .jpg, .jpeg, .png, .dcm (Max 32MB)</p>
+                        <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.dcm" onchange="handleFileSelect(event)">
+                    </div>
+                    <div id="filePreviewContainer" class="mt-3 d-none">
+                        <div class="d-flex align-items-center gap-3 p-3 bg-secondary bg-opacity-10 rounded border border-secondary">
+                            <img id="imagePreview" src="" class="rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                            <div>
+                                <h6 class="fw-bold m-0" id="previewFileName">filename.png</h6>
+                                <span class="fs-7 text-muted" id="previewFileSize">0 KB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-secondary my-4">
+
+                <!-- 3. Clinical Data Context Entry (Central Feature) -->
+                <h5 class="fw-bold mb-3 text-info"><i class="fa-solid fa-notes-medical me-2"></i> Patient Clinical Context & Vitals</h5>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fs-7 fw-medium">Reported Symptoms *</label>
+                        <textarea class="form-control bg-transparent border-secondary-subtle" id="symptoms" rows="2" required placeholder="e.g. Persistent fever, productive cough, shortness of breath for 5 days"></textarea>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fs-7 fw-medium">Symptom Duration (Days)</label>
+                        <input type="number" class="form-control bg-transparent border-secondary-subtle" id="durationDays" value="5" min="1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fs-7 fw-medium">Blood Pressure</label>
+                        <input type="text" class="form-control bg-transparent border-secondary-subtle" id="bloodPressure" value="120/80" placeholder="120/80">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label fs-7 fw-medium">Age</label>
+                        <input type="number" class="form-control bg-transparent border-secondary-subtle" id="patientAge" value="45" min="1" max="120">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fs-7 fw-medium">Gender</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="patientGender">
+                            <option value="Male" selected>Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fs-7 fw-medium">Smoking Status</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="smokingStatus">
+                            <option value="Non-Smoker" selected>Non-Smoker</option>
+                            <option value="Current Smoker">Current Smoker</option>
+                            <option value="Former Smoker">Former Smoker</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center gap-3 pt-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="diabetesCheck">
+                            <label class="form-check-input-label fs-7" for="diabetesCheck">Diabetes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hypertensionCheck">
+                            <label class="form-check-input-label fs-7" for="hypertensionCheck">Hypertension</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/doctor/dashboard" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" id="uploadSubmitBtn">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Upload & Run AI Fusion Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedFile = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadPatientsDropdown();
+    initDropzone();
+});
+
+function loadPatientsDropdown() {
+    fetch('/api/patients')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('patientSelect');
+            const patients = data.patients || [];
+            select.innerHTML = '<option value="">-- Select Patient --</option>' + 
+                patients.map(p => `<option value="${p.id}">${p.full_name} (${p.unique_patient_id}) - ${p.gender}, DOB: ${p.dob}</option>`).join('');
+        });
+}
+
+function initDropzone() {
+    const dz = document.getElementById('uploadDropzone');
+    ['dragenter', 'dragover'].forEach(name => {
+        dz.addEventListener(name, (e) => { e.preventDefault(); dz.classList.add('dragover'); }, false);
+    });
+    ['dragleave', 'drop'].forEach(name => {
+        dz.addEventListener(name, (e) => { e.preventDefault(); dz.classList.remove('dragover'); }, false);
+    });
+    dz.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect({ target: { files: files } });
+        }
+    });
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    selectedFile = file;
+
+    document.getElementById('previewFileName').innerText = file.name;
+    document.getElementById('previewFileSize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        document.getElementById('imagePreview').src = event.target.result;
+        document.getElementById('filePreviewContainer').classList.remove('d-none');
+    };
+    reader.readAsDataURL(file);
+}
+
+function submitScanUpload(e) {
+    e.preventDefault();
+    const patientId = document.getElementById('patientSelect').value;
+    if (!patientId) { showAlert('Please select a patient', 'danger'); return; }
+    if (!selectedFile) { showAlert('Please select a medical scan file', 'danger'); return; }
+
+    const btn = document.getElementById('uploadSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Uploading Image...';
+
+    const formData = new FormData();
+    formData.append('patient_id', patientId);
+    formData.append('scan_type', document.getElementById('scanType').value);
+    formData.append('body_part', document.getElementById('bodyPart').value);
+    formData.append('scans', selectedFile);
+
+    // 1. Upload scan
+    fetch('/api/scans/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.scans || data.scans.length === 0) {
+            throw new Error(data.error || 'Upload failed');
+        }
+
+        const scanId = data.scans[0].id;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Saving Clinical Data...';
+
+        // 2. Save Clinical Data
+        const clinData = {
+            scan_id: scanId,
+            symptoms: document.getElementById('symptoms').value,
+            duration_days: document.getElementById('durationDays').value,
+            blood_pressure: document.getElementById('bloodPressure').value,
+            age: document.getElementById('patientAge').value,
+            gender: document.getElementById('patientGender').value,
+            smoking_status: document.getElementById('smokingStatus').value,
+            diabetes: document.getElementById('diabetesCheck').checked,
+            hypertension: document.getElementById('hypertensionCheck').checked
+        };
+
+        return fetch('/api/clinical-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(clinData)
+        }).then(() => scanId);
+    })
+    .then(scanId => {
+        btn.innerHTML = '<i class="fa-solid fa-brain fa-spin me-2"></i> Running ResNet-50 AI Fusion...';
+
+        // 3. Trigger AI Feature-Level Fusion Analysis
+        return fetch(`/api/ai/analyze/${scanId}`, { method: 'POST' }).then(() => scanId);
+    })
+    .then(scanId => {
+        showAlert('AI Analysis complete!', 'success');
+        window.location.href = `/doctor/scan-analysis/${scanId}`;
+    })
+    .catch(err => {
+        console.error(err);
+        showAlert(err.message || 'Error processing scan upload', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Upload & Run AI Fusion Analysis';
+    });
+}
+</script>
+{% endblock %}

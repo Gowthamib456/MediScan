@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Directory & Inter-Hospital Transfer - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-hospital-user text-primary me-2"></i> Patient Directory & Management</h2>
+        <p class="text-secondary fs-7 m-0">Search, Register, View Clinical Histories & Secure Inter-Hospital Transfer</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerPatientModal"><i class="fa-solid fa-user-plus me-1"></i> Register New Patient</button>
+</div>
+
+<div class="card glass-card p-4 mb-4">
+    <div class="row g-3">
+        <div class="col-md-9">
+            <input type="text" class="form-control bg-transparent" id="patientSearchBox" placeholder="Search by patient name, Unique ID, phone number or medical history..." onkeyup="filterPatients()">
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-outline-secondary w-100" onclick="filterPatients()"><i class="fa-solid fa-filter me-1"></i> Filter Directory</button>
+        </div>
+    </div>
+</div>
+
+<div class="card glass-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Full Name</th>
+                    <th>DOB / Age</th>
+                    <th>Gender</th>
+                    <th>Blood Group</th>
+                    <th>Hospital Branch</th>
+                    <th>Registered Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="patientsDirectoryBody">
+                <tr><td colspan="8" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading patient registry...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Register Patient -->
+<div class="modal fade" id="registerPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content glass-modal border border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-user-plus text-primary me-2"></i> Register New Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="submitNewPatient(event)">
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fs-7 fw-semibold">Full Name *</label>
+                            <input type="text" class="form-control" id="regFullName" required placeholder="Jane Doe">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fs-7 fw-semibold">Date of Birth *</label>
+                            <input type="date" class="form-control" id="regDob" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fs-7 fw-semibold">Gender *</label>
+                            <select class="form-select" id="regGender" required>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fs-7">Blood Group</label>
+                            <input type="text" class="form-control" id="regBloodGroup" placeholder="O+">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fs-7">Phone Number</label>
+                            <input type="text" class="form-control" id="regPhone" placeholder="+91 98765 43210">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fs-7">Email Address</label>
+                            <input type="email" class="form-control" id="regEmail" placeholder="jane@example.com">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Medical History & Allergies</label>
+                        <textarea class="form-control" id="regHistory" rows="2" placeholder="e.g. Asthma history, Penicillin allergy"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Patient Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Patient -->
+<div class="modal fade" id="editPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content glass-modal border border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-user-pen text-primary me-2"></i> Edit Patient Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="submitPatientEdit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="editPatientId">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fs-7 fw-semibold">Full Name *</label>
+                            <input type="text" class="form-control" id="editFullName" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fs-7 fw-semibold">Date of Birth *</label>
+                            <input type="date" class="form-control" id="editDob" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fs-7 fw-semibold">Gender *</label>
+                            <select class="form-select" id="editGender" required>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4"><label class="form-label fs-7">Blood Group</label><input type="text" class="form-control" id="editBloodGroup"></div>
+                        <div class="col-md-4"><label class="form-label fs-7">Phone Number</label><input type="text" class="form-control" id="editPhone"></div>
+                        <div class="col-md-4"><label class="form-label fs-7">Email Address</label><input type="email" class="form-control" id="editEmail"></div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6"><label class="form-label fs-7">Address</label><input type="text" class="form-control" id="editAddress"></div>
+                        <div class="col-md-6"><label class="form-label fs-7">Emergency Contact</label><input type="text" class="form-control" id="editEmergencyContact"></div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label fs-7">Medical History</label><textarea class="form-control" id="editMedicalHistory" rows="3"></textarea></div>
+                        <div class="col-md-4"><label class="form-label fs-7">Allergies</label><textarea class="form-control" id="editAllergies" rows="3"></textarea></div>
+                        <div class="col-md-4"><label class="form-label fs-7">Existing Conditions</label><textarea class="form-control" id="editExistingConditions" rows="3"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="editPatientSubmitBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Inter-Hospital Secure Transfer -->
+<div class="modal fade" id="transferPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal border border-warning">
+            <div class="modal-header border-bottom border-warning">
+                <h5 class="modal-title text-warning"><i class="fa-solid fa-building-columns text-warning me-2"></i> Inter-Hospital Secure Record Transfer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="submitPatientTransfer(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="transferPatientId">
+                    <div class="mb-3">
+                        <label class="form-label fs-7 fw-semibold">Patient Name</label>
+                        <input type="text" class="form-control" id="transferPatientName" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fs-7 fw-semibold">Select Target Hospital *</label>
+                        <select class="form-select" id="targetHospitalSelect" required>
+                            <option value="">-- Choose Destination Hospital --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fs-7 fw-semibold">Transfer Reason / Clinical Referral</label>
+                        <textarea class="form-control" id="transferReason" rows="2" placeholder="e.g. Patient shifting for specialized pulmonology care"></textarea>
+                    </div>
+
+                    <div class="p-3 bg-secondary bg-opacity-10 rounded border border-warning border-opacity-25 fs-8 text-secondary">
+                        <i class="fa-solid fa-lock text-warning me-1"></i>
+                        <span>Generates an encrypted <b>AES-256 Inter-Hospital Transfer Token</b>. All scans, clinical history, and PDF reports will be securely accessible by target hospital doctors.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-warning">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-semibold" id="transferSubmitBtn">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Authorize Encrypted Transfer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let availableHospitals = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPatients();
+    loadHospitalsList();
+});
+
+function loadHospitalsList() {
+    fetch('/api/hospitals/all')
+        .then(r => r.json())
+        .then(data => {
+            availableHospitals = data.hospitals || [];
+        });
+}
+
+function fetchPatients(query = '') {
+    fetch('/api/patients?q=' + encodeURIComponent(query))
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.message || data.error || `Patient search failed (${response.status})`);
+            }
+            return data;
+        })
+        .then(data => {
+            const patients = data.patients || [];
+            const tbody = document.getElementById('patientsDirectoryBody');
+            if (patients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No matching patient records found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = patients.map(p => `
+                <tr>
+                    <td><code>${p.unique_patient_id}</code></td>
+                    <td class="fw-bold text-light">${p.full_name}</td>
+                    <td>${p.dob}</td>
+                    <td>${p.gender}</td>
+                    <td><span class="badge bg-secondary-subtle text-light">${p.blood_group || 'N/A'}</span></td>
+                    <td><span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa-solid fa-hospital me-1"></i> ${p.hospital_id ? 'Branch #' + p.hospital_id : 'System Wide'}</span></td>
+                    <td class="fs-7 text-muted">${p.created_at}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="openTransferModal(${p.id}, '${p.full_name}')" title="Transfer Patient to Other Hospital">
+                            <i class="fa-solid fa-right-left"></i> Transfer
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditPatientModal(${p.id})" title="Edit patient details">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <a href="/doctor/upload-scan?patient_id=${p.id}" class="btn btn-sm btn-outline-primary" title="Upload Scan for Patient"><i class="fa-solid fa-upload"></i></a>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            document.getElementById('patientsDirectoryBody').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger py-4">${error.message}. Please refresh and sign in as a doctor or administrator.</td></tr>`;
+        });
+}
+
+function openEditPatientModal(patientId) {
+    fetch(`/api/patients/${patientId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.patient) {
+                showAlert(data.message || data.error || 'Unable to load patient details', 'danger');
+                return;
+            }
+            const patient = data.patient;
+            document.getElementById('editPatientId').value = patient.id;
+            document.getElementById('editFullName').value = patient.full_name || '';
+            document.getElementById('editDob').value = patient.dob || '';
+            document.getElementById('editGender').value = patient.gender || 'Other';
+            document.getElementById('editBloodGroup').value = patient.blood_group || '';
+            document.getElementById('editPhone').value = patient.phone || '';
+            document.getElementById('editEmail').value = patient.email || '';
+            document.getElementById('editAddress').value = patient.address || '';
+            document.getElementById('editEmergencyContact').value = patient.emergency_contact || '';
+            document.getElementById('editMedicalHistory').value = patient.medical_history || '';
+            document.getElementById('editAllergies').value = patient.allergies || '';
+            document.getElementById('editExistingConditions').value = patient.existing_conditions || '';
+            new bootstrap.Modal(document.getElementById('editPatientModal')).show();
+        })
+        .catch(() => showAlert('Unable to load patient details', 'danger'));
+}
+
+function submitPatientEdit(event) {
+    event.preventDefault();
+    const button = document.getElementById('editPatientSubmitBtn');
+    button.disabled = true;
+    fetch(`/api/patients/${document.getElementById('editPatientId').value}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            full_name: document.getElementById('editFullName').value,
+            dob: document.getElementById('editDob').value,
+            gender: document.getElementById('editGender').value,
+            blood_group: document.getElementById('editBloodGroup').value,
+            phone: document.getElementById('editPhone').value,
+            email: document.getElementById('editEmail').value,
+            address: document.getElementById('editAddress').value,
+            emergency_contact: document.getElementById('editEmergencyContact').value,
+            medical_history: document.getElementById('editMedicalHistory').value,
+            allergies: document.getElementById('editAllergies').value,
+            existing_conditions: document.getElementById('editExistingConditions').value
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.patient) {
+                showAlert('Patient details updated successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editPatientModal')).hide();
+                fetchPatients(document.getElementById('patientSearchBox').value);
+            } else {
+                showAlert(data.message || data.error || 'Unable to update patient', 'danger');
+            }
+        })
+        .catch(() => showAlert('Unable to update patient details', 'danger'))
+        .finally(() => { button.disabled = false; });
+}
+
+function openTransferModal(patientId, patientName) {
+    document.getElementById('transferPatientId').value = patientId;
+    document.getElementById('transferPatientName').value = patientName;
+
+    const select = document.getElementById('targetHospitalSelect');
+    select.innerHTML = '<option value="">-- Choose Destination Hospital --</option>' + 
+        availableHospitals.map(h => `<option value="${h.id}">${h.name} (${h.code})</option>`).join('');
+
+    const modal = new bootstrap.Modal(document.getElementById('transferPatientModal'));
+    modal.show();
+}
+
+function submitPatientTransfer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('transferSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Encrypting & Transferring...';
+
+    const payload = {
+        patient_id: document.getElementById('transferPatientId').value,
+        target_hospital_id: document.getElementById('targetHospitalSelect').value,
+        reason: document.getElementById('transferReason').value
+    };
+
+    fetch('/api/patients/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.transfer) {
+            showAlert(`Patient successfully transferred to ${data.transfer.to_hospital}! Security Token: ${data.transfer.transfer_token.substring(0, 12)}...`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('transferPatientModal')).hide();
+            fetchPatients();
+        } else {
+            showAlert(data.message || data.error, 'danger');
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i> Authorize Encrypted Transfer';
+    })
+    .catch(err => {
+        console.error(err);
+        showAlert('Inter-hospital transfer failed', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i> Authorize Encrypted Transfer';
+    });
+}
+
+function filterPatients() {
+    const q = document.getElementById('patientSearchBox').value;
+    fetchPatients(q);
+}
+
+function submitNewPatient(e) {
+    e.preventDefault();
+    const payload = {
+        full_name: document.getElementById('regFullName').value,
+        dob: document.getElementById('regDob').value,
+        gender: document.getElementById('regGender').value,
+        blood_group: document.getElementById('regBloodGroup').value,
+        phone: document.getElementById('regPhone').value,
+        email: document.getElementById('regEmail').value,
+        medical_history: document.getElementById('regHistory').value
+    };
+
+    fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.patient) {
+            showAlert('Patient registered successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('registerPatientModal')).hide();
+            fetchPatients();
+        } else {
+            showAlert(data.message || data.error, 'danger');
+        }
+    });
+}
+</script>
+{% endblock %}

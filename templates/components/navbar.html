@@ -1,0 +1,37 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-primary-subtle shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-gradient" href="/">
+      <i class="fa-solid me-1">🩺</i> MediScan
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">Home</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            Dashboards & Interfaces
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-menu-item dropdown-item" href="/dashboard/doctor"><i class="fa-solid fa-user-md me-2"></i>Doctor Dashboard</a></li>
+            <li><a class="dropdown-menu-item dropdown-item" href="/dashboard/patient"><i class="fa-solid fa-user me-2"></i>Patient Dashboard</a></li>
+            <li><a class="dropdown-menu-item dropdown-item" href="/dashboard/admin"><i class="fa-solid fa-user-shield me-2"></i>Admin Dashboard</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-menu-item dropdown-item" href="/interface/viewer"><i class="fa-solid fa-eye me-2"></i>Viewer Interface</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#architecture">System Architecture</a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-outline-info border text-info px-3 py-2" id="api-status-badge">
+          <span class="spinner-grow spinner-grow-sm text-info me-1" role="status"></span> Checking API...
+        </span>
+      </div>
+    </div>
+  </div>
+</nav>

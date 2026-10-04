@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard - MediScan Clinical Context Integration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-stethoscope text-primary me-2"></i> Clinical Decision Support Dashboard</h2>
+        <p class="text-secondary fs-7 m-0">AI Feature-Level Fusion Analysis (Chest X-Ray, CT Scan, MRI)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/doctor/patients" class="btn btn-warning"><i class="fa-solid fa-right-left me-1"></i> Transfer Patient</a>
+        <a href="/doctor/patients" class="btn btn-outline-primary"><i class="fa-solid fa-user-plus me-1"></i> Register Patient</a>
+        <a href="/doctor/upload-scan" class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload New Scan</a>
+    </div>
+</div>
+
+<!-- Doctor Dashboard Quick Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-primary">
+            <div class="text-secondary fs-7">Total Patients</div>
+            <h3 class="fw-bold my-1" id="dashTotalPatients">--</h3>
+            <div class="fs-7 text-primary">Active Cases</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-info">
+            <div class="text-secondary fs-7">Total Scans</div>
+            <h3 class="fw-bold my-1" id="dashTotalScans">--</h3>
+            <div class="fs-7 text-info">X-Ray / CT / MRI</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-warning">
+            <div class="text-secondary fs-7">Pending Reviews</div>
+            <h3 class="fw-bold my-1" id="dashPendingReviews">--</h3>
+            <div class="fs-7 text-warning">Awaiting Doctor</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-success">
+            <div class="text-secondary fs-7">Finalized Reports</div>
+            <h3 class="fw-bold my-1" id="dashReportsCount">--</h3>
+            <div class="fs-7 text-success">PDF Generated</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-secondary">
+            <div class="text-secondary fs-7">Avg AI Confidence</div>
+            <h3 class="fw-bold my-1" id="dashAvgConfidence">--</h3>
+            <div class="fs-7 text-light">ResNet-50 Fusion</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card glass-card p-3 border-start border-4 border-danger">
+            <div class="text-secondary fs-7">High-Risk Cases</div>
+            <h3 class="fw-bold my-1 text-danger" id="dashHighRiskCases">--</h3>
+            <div class="fs-7 text-danger">Priority Flagged</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Scans Worklist -->
+    <div class="col-12 col-xl-8">
+        <div class="card glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0"><i class="fa-solid fa-list-check text-primary me-2"></i> Recent Medical Scans Worklist</h5>
+                <a href="/doctor/upload-scan" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-plus me-1"></i> New Upload</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Scan ID</th>
+                            <th>Patient Name</th>
+                            <th>Modality</th>
+                            <th>Uploaded</th>
+                            <th>AI Prediction</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="worklistTableBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading medical scans worklist...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Patient Quick Search Sidebar -->
+    <div class="col-12 col-xl-4">
+        <div class="card glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-magnifying-glass text-info me-2"></i> Patient Lookup</h5>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control bg-transparent" id="globalSearchInput" placeholder="Search name or Patient ID (Press 'S')...">
+                <button class="btn btn-outline-secondary" type="button" onclick="performPatientSearch()"><i class="fa-solid fa-search"></i></button>
+            </div>
+            <div class="list-group list-group-flush bg-transparent" id="quickPatientList">
+                <div class="text-muted fs-7 text-center py-3">Enter search query above</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardAnalytics();
+    loadScansWorklist();
+});
+
+function loadDashboardAnalytics() {
+    fetch('/api/analytics/dashboard')
+        .then(r => r.json())
+        .then(data => {
+            const s = data.summary;
+            document.getElementById('dashTotalPatients').innerText = s.total_patients;
+            document.getElementById('dashTotalScans').innerText = s.total_scans;
+            document.getElementById('dashPendingReviews').innerText = s.pending_reviews;
+            document.getElementById('dashReportsCount').innerText = s.reports_generated;
+            document.getElementById('dashAvgConfidence').innerText = s.average_confidence + '%';
+            document.getElementById('dashHighRiskCases').innerText = s.high_risk_cases;
+        });
+}
+
+function loadScansWorklist() {
+    fetch('/api/scans')
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || data.error || `Unable to load scans (${response.status})`);
+            return data;
+        })
+        .then(data => {
+            const scans = data.scans || [];
+            const tbody = document.getElementById('worklistTableBody');
+            if (scans.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No scans uploaded yet. <a href="/doctor/upload-scan">Upload your first scan</a></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = scans.map(s => {
+                let statusBadge = '<span class="badge bg-secondary">Uploaded</span>';
+                if (s.status === 'ANALYZED') statusBadge = '<span class="badge bg-warning text-dark">Analyzed</span>';
+                if (s.status === 'FINALIZED') statusBadge = '<span class="badge bg-success">Finalized</span>';
+
+                return `
+                    <tr>
+                        <td><code>#${s.id}</code></td>
+                        <td class="fw-semibold">${s.patient_name} <br/><span class="fs-7 text-muted">${s.patient_unique_id}</span></td>
+                        <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${s.scan_type}</span></td>
+                        <td class="fs-7 text-muted">${s.uploaded_at}</td>
+                        <td>
+                            ${s.ai_result ? `<span class="fw-bold text-info">${s.ai_result.primary_prediction || 'Analyzed'}</span> <span class="fs-7 text-muted">(${s.ai_result.confidence_percentage || 'N/A'})</span>` : '<span class="fs-7 text-muted">Pending AI</span>'}
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end">
+                            <a href="/doctor/scan-analysis/${s.id}" class="btn btn-sm btn-primary" title="Open AI Analysis Studio">
+                                <i class="fa-solid fa-microscope me-1"></i> Analyze
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            document.getElementById('worklistTableBody').innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${error.message}</td></tr>`;
+        });
+}
+
+function performPatientSearch() {
+    const q = document.getElementById('globalSearchInput').value;
+    if (!q) return;
+
+    fetch('/api/patients?q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(data => {
+            const patients = data.patients || [];
+            const list = document.getElementById('quickPatientList');
+            if (patients.length === 0) {
+                list.innerHTML = '<div class="text-muted fs-7 text-center py-2">No matching patients found.</div>';
+                return;
+            }
+
+            list.innerHTML = patients.map(p => `
+                <a href="/doctor/patient-detail/${p.id}" class="list-group-item list-group-item-action bg-transparent border-secondary text-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">${p.full_name}</div>
+                        <div class="fs-7 text-muted">${p.unique_patient_id} | ${p.gender}, ${p.dob}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-muted fs-7"></i>
+                </a>
+            `).join('');
+        });
+}
+</script>
+{% endblock %}

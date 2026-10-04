@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard – MediScan{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+    <div>
+      <span class="badge bg-warning text-dark px-3 py-2">Role: ADMIN</span>
+      <h1 class="h2 fw-bold text-light mb-0 mt-2">Admin Control & Security Audit</h1>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">&larr; Back to Main Portal</a>
+  </div>
+
+  <div class="alert alert-warning bg-dark border-warning text-warning p-4 rounded shadow-sm mb-4">
+    <h5 class="alert-heading fw-bold mb-2">Phase 1 Foundation Setup</h5>
+    <p class="mb-0 small">
+      This is the Admin Dashboard route stub. User account CRUD, RBAC role management, hospital facility administration, and system Audit Log search tools will be integrated here.
+    </p>
+  </div>
+</div>
+{% endblock %}

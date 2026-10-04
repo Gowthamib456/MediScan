@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard – MediScan{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+    <div>
+      <span class="badge bg-primary px-3 py-2">Role: DOCTOR</span>
+      <h1 class="h2 fw-bold text-light mb-0 mt-2">Doctor Diagnostic Studio</h1>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">&larr; Back to Main Portal</a>
+  </div>
+
+  <div class="alert alert-info bg-dark border-info text-info p-4 rounded shadow-sm mb-4">
+    <h5 class="alert-heading fw-bold mb-2">Phase 1 Foundation Setup</h5>
+    <p class="mb-0 small">
+      This is the Doctor Dashboard route stub. In Phase 4 & Phase 5, the Interactive DICOM/PNG Scan Studio, Grad-CAM visualizer, SHAP/LIME graphs, scan comparison tool, and Diagnostic Sign-off panel will be integrated here.
+    </p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary border-opacity-25 p-3">
+        <h6 class="text-muted">Assigned Scans</h6>
+        <h3 class="text-primary fw-bold">0 Pending</h3>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary border-opacity-25 p-3">
+        <h6 class="text-muted">Completed Reviews</h6>
+        <h3 class="text-success fw-bold">0 Finalized</h3>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary border-opacity-25 p-3">
+        <h6 class="text-muted">Hospital Facility</h6>
+        <h3 class="text-info fw-bold">General Hospital #1</h3>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

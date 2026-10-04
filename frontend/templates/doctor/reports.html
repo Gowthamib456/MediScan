@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Reports Registry - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-file-medical text-primary me-2"></i> Finalized Reports Archive</h2>
+        <p class="text-secondary fs-7 m-0">Tamper-Evident Medical Reports with Embedded QR Verification & PDF Export</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="exportPatientCsv()"><i class="fa-solid fa-file-csv me-1"></i> Export CSV</button>
+    </div>
+</div>
+
+<div class="card glass-card p-3 mb-4">
+    <div class="input-group">
+        <span class="input-group-text bg-transparent border-secondary-subtle"><i class="fa-solid fa-magnifying-glass text-secondary"></i></span>
+        <input type="search" class="form-control bg-transparent" id="reportPatientSearch" placeholder="Find reports by patient name or Patient ID..." oninput="loadReports()">
+    </div>
+</div>
+
+<div class="card glass-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Report UUID</th>
+                    <th>Patient ID & Name</th>
+                    <th>Scan Modality</th>
+                    <th>AI Prediction</th>
+                    <th>Doctor Diagnosis</th>
+                    <th>Risk Level</th>
+                    <th>Finalized Date</th>
+                    <th class="text-end">Download PDF</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+                <tr><td colspan="8" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading report registry...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadReports();
+});
+
+function loadReports() {
+    const query = document.getElementById('reportPatientSearch').value.trim();
+    fetch('/api/reports?q=' + encodeURIComponent(query))
+        .then(r => r.json())
+        .then(data => {
+            const reports = data.reports || [];
+            const tbody = document.getElementById('reportsTableBody');
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No finalized reports found in system registry.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reports.map(r => `
+                <tr>
+                    <td><code>${r.report_uuid.substring(0, 8)}...</code></td>
+                    <td><span class="fw-bold text-light">${r.patient_name}</span><br/><span class="fs-7 text-muted">${r.patient_unique_id}</span></td>
+                    <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${r.scan_type}</span></td>
+                    <td>${r.ai_prediction}</td>
+                    <td class="fw-semibold text-info">${r.doctor_final_diagnosis}</td>
+                    <td><span class="badge badge-risk-${r.risk_level.toLowerCase()}">${r.risk_level}</span></td>
+                    <td class="fs-7 text-muted">${r.finalized_at || r.created_at}</td>
+                    <td class="text-end">
+                        <a href="/api/reports/${r.id}/pdf" class="btn btn-sm btn-success" id="downloadReportBtn" title="Download Verified PDF">
+                            <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        });
+}
+
+function exportPatientCsv() {
+    const query = document.getElementById('reportPatientSearch').value.trim();
+    window.location.href = '/api/reports/export?q=' + encodeURIComponent(query);
+}
+</script>
+{% endblock %}

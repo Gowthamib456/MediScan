@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Clinical Analytics - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Clinical Analytics & Epidemiology</h2>
+        <p class="text-secondary fs-7 m-0">Aggregate AI Predictions, Diagnostic Frequency & Risk Distribution</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 text-center">Diagnosis Distribution</h5>
+            <canvas id="diagChart" style="max-height: 280px;"></canvas>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 text-center">Risk Level Stratification</h5>
+            <canvas id="riskChart" style="max-height: 280px;"></canvas>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 text-center">Modality Breakdown</h5>
+            <canvas id="modalityChart" style="max-height: 280px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/analytics/dashboard')
+        .then(r => r.json())
+        .then(data => {
+            renderCharts(data);
+        });
+});
+
+function renderCharts(data) {
+    // 1. Diagnosis Chart
+    const diagData = data.diagnosis_distribution || [];
+    new Chart(document.getElementById('diagChart'), {
+        type: 'doughnut',
+        data: {
+            labels: diagData.map(d => d.label),
+            datasets: [{
+                data: diagData.map(d => d.count),
+                backgroundColor: ['#2563EB', '#06B6D4', '#10B981', '#F59E0B', '#F43F5E']
+            }]
+        },
+        options: { plugins: { legend: { labels: { color: '#F8FAFC' } } } }
+    });
+
+    // 2. Risk Chart
+    const riskData = data.risk_distribution || [];
+    new Chart(document.getElementById('riskChart'), {
+        type: 'pie',
+        data: {
+            labels: riskData.map(r => r.risk_level),
+            datasets: [{
+                data: riskData.map(r => r.count),
+                backgroundColor: ['#10B981', '#F59E0B', '#F43F5E']
+            }]
+        },
+        options: { plugins: { legend: { labels: { color: '#F8FAFC' } } } }
+    });
+
+    // 3. Modality Chart
+    const scanData = data.scan_type_distribution || [];
+    new Chart(document.getElementById('modalityChart'), {
+        type: 'bar',
+        data: {
+            labels: scanData.map(s => s.scan_type),
+            datasets: [{
+                label: 'Scan Count',
+                data: scanData.map(s => s.count),
+                backgroundColor: '#2563EB'
+            }]
+        },
+        options: {
+            scales: {
+                x: { ticks: { color: '#F8FAFC' } },
+                y: { ticks: { color: '#F8FAFC' } }
+            },
+            plugins: { legend: { labels: { color: '#F8FAFC' } } }
+        }
+    });
+}
+</script>
+{% endblock %}

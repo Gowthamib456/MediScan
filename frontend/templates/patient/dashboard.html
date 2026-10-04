@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Portal - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-hospital-user text-primary me-2"></i> Patient Portal</h2>
+        <p class="text-secondary fs-7 m-0">View Verified Reports, Visual Medical Timeline & Multi-Lingual Explanations</p>
+    </div>
+</div>
+
+<!-- Patient Profile Details -->
+<div class="card glass-card p-4 mb-4" id="patientProfileSection">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold m-0 text-info"><i class="fa-solid fa-id-card me-2"></i> My Patient Details</h4>
+        <span class="badge bg-success-subtle text-success border border-success-subtle" id="patientProfileStatus">Verified Profile</span>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="text-secondary fs-7">Full Name</div>
+            <div class="fw-semibold text-light" id="patientDetailName">Loading...</div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="text-secondary fs-7">Patient ID</div>
+            <div class="fw-semibold text-light" id="patientDetailId">Loading...</div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="text-secondary fs-7">Date of Birth</div>
+            <div class="fw-semibold text-light" id="patientDetailDob">Loading...</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-secondary fs-7">Gender</div>
+            <div class="fw-semibold text-light" id="patientDetailGender">Loading...</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-secondary fs-7">Blood Group</div>
+            <div class="fw-semibold text-light" id="patientDetailBloodGroup">Loading...</div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="text-secondary fs-7">Phone</div>
+            <div class="fw-semibold text-light" id="patientDetailPhone">Loading...</div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="text-secondary fs-7">Email</div>
+            <div class="fw-semibold text-light text-break" id="patientDetailEmail">Loading...</div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="text-secondary fs-7">Medical History</div>
+            <div class="text-light" id="patientDetailHistory">Loading...</div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="text-secondary fs-7">Allergies</div>
+            <div class="text-light" id="patientDetailAllergies">Loading...</div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="text-secondary fs-7">Existing Conditions</div>
+            <div class="text-light" id="patientDetailConditions">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card glass-card p-3 border-start border-4 border-primary">
+            <div class="text-secondary fs-7">Total Reports</div>
+            <h3 class="fw-bold my-1" id="patStatReports">--</h3>
+            <div class="fs-7 text-primary">Finalized Records</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card glass-card p-3 border-start border-4 border-info">
+            <div class="text-secondary fs-7">Total Scans</div>
+            <h3 class="fw-bold my-1" id="patStatScans">--</h3>
+            <div class="fs-7 text-info">X-Ray / CT / MRI</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card glass-card p-3 border-start border-4 border-success">
+            <div class="text-secondary fs-7">Latest Scan Date</div>
+            <h3 class="fw-bold my-1 fs-5 text-truncate" id="patStatDate">--</h3>
+            <div class="fs-7 text-success">Verified</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card glass-card p-3 border-start border-4 border-warning">
+            <div class="text-secondary fs-7">Account Status</div>
+            <h3 class="fw-bold my-1 text-warning fs-5">ACTIVE</h3>
+            <div class="fs-7 text-secondary">HIPAA Protected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Latest Medical Report Section -->
+<div class="card glass-card p-4 p-md-5 mb-4" id="latestReportSection">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h4 class="fw-bold m-0 text-primary"><i class="fa-solid fa-file-medical-tone me-2"></i> Latest Medical Report</h4>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Language Selector Dropdown -->
+            <div class="d-flex align-items-center gap-1 me-2">
+                <i class="fa-solid fa-language text-info fs-5"></i>
+                <select class="form-select form-select-sm bg-dark text-light border-info" id="languageSelect" onchange="changeLanguage()" style="width: auto;">
+                    <option value="en" selected>English</option>
+                    <option value="hi">Hindi / हिंदी</option>
+                    <option value="kn">Kannada / ಕನ್ನಡ</option>
+                    <option value="te">Telugu / తెలుగు</option>
+                    <option value="ta">Tamil / தமிழ்</option>
+                </select>
+            </div>
+
+            <button class="btn btn-outline-primary" id="voicePlayBtn" onclick="triggerVoiceSpeech()">
+                <i class="fa-solid fa-volume-high me-1" id="voiceIcon"></i> 🔊 Listen to Explanation
+            </button>
+            <a href="#" class="btn btn-success" id="downloadPdfBtn" target="_blank"><i class="fa-solid fa-file-pdf me-1"></i> Download PDF</a>
+        </div>
+    </div>
+
+    <!-- Doctor Assessment & AI Dual Card -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="p-3 bg-secondary bg-opacity-10 rounded border border-secondary">
+                <h6 class="fw-bold text-info mb-2"><i class="fa-solid fa-user-doctor me-1"></i> Doctor's Final Assessment</h6>
+                <h5 class="fw-bold text-light" id="patDocDiagnosis">Loading...</h5>
+                <div class="fs-7 text-muted mb-2" id="patDocName">Attending Doctor: --</div>
+                <span class="badge badge-risk-medium fs-7" id="patRiskBadge">Risk Level: --</span>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="p-3 bg-secondary bg-opacity-10 rounded border border-secondary">
+                <h6 class="fw-bold text-secondary mb-2"><i class="fa-solid fa-robot me-1"></i> AI Decision Support Finding</h6>
+                <h5 class="fw-bold text-light" id="patAiFinding">--</h5>
+                <div class="fs-7 text-muted mb-2" id="patAiConf">AI Confidence: --</div>
+                <div class="fs-8 text-secondary">AI prediction verified by attending physician.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Friendly "In Plain English / Regional Language" Explanation Box -->
+    <div class="p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-primary m-0"><i class="fa-solid fa-comment-medical me-2"></i> Patient-Friendly Explanation</h6>
+            <span class="badge bg-info text-dark" id="langBadge">English</span>
+        </div>
+        <p class="fs-6 text-light mb-0" id="plainEnglishText">Loading translation...</p>
+    </div>
+</div>
+
+<!-- Tabs: Report History & Timeline -->
+<ul class="nav nav-tabs border-secondary mb-4" id="patientTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#patReportsTab"><i class="fa-solid fa-folder-closed me-1"></i> My Reports History</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#patTimelineTab"><i class="fa-solid fa-timeline me-1"></i> Medical Timeline</button></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="patReportsTab">
+        <div class="card glass-card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Scan Type</th>
+                            <th>Date</th>
+                            <th>Doctor Diagnosis</th>
+                            <th>Risk Level</th>
+                            <th class="text-end">Download PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patReportsTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Loading reports...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="patTimelineTab">
+        <div class="card glass-card p-4">
+            <div class="timeline-list" id="patTimelineList">
+                <div class="text-muted py-3">Loading timeline...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentMultilingualExplanations = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadPatientPortalData();
+});
+
+function loadPatientPortalData() {
+    fetch('/api/patient/portal')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                showAlert(data.message || data.error, 'danger');
+                return;
+            }
+
+            const stats = data.stats;
+            const patient = data.patient || {};
+            document.getElementById('patientDetailName').innerText = patient.full_name || 'Not provided';
+            document.getElementById('patientDetailId').innerText = patient.unique_patient_id || 'Not provided';
+            document.getElementById('patientDetailDob').innerText = patient.dob || 'Not provided';
+            document.getElementById('patientDetailGender').innerText = patient.gender || 'Not provided';
+            document.getElementById('patientDetailBloodGroup').innerText = patient.blood_group || 'Not provided';
+            document.getElementById('patientDetailPhone').innerText = patient.phone || 'Not provided';
+            document.getElementById('patientDetailEmail').innerText = patient.email || 'Not provided';
+            document.getElementById('patientDetailHistory').innerText = patient.medical_history || 'None recorded';
+            document.getElementById('patientDetailAllergies').innerText = patient.allergies || 'None recorded';
+            document.getElementById('patientDetailConditions').innerText = patient.existing_conditions || 'None recorded';
+            document.getElementById('patStatReports').innerText = stats.total_reports;
+            document.getElementById('patStatScans').innerText = stats.total_scans;
+            document.getElementById('patStatDate').innerText = stats.latest_scan_date;
+
+            const rep = data.latest_report;
+            if (rep) {
+                document.getElementById('patDocDiagnosis').innerText = rep.doctor_final_diagnosis;
+                document.getElementById('patDocName').innerText = `Attending Doctor: ${rep.doctor_name}`;
+                document.getElementById('patAiFinding').innerText = rep.ai_prediction || 'N/A';
+                document.getElementById('patAiConf').innerText = `AI Model Confidence: ${rep.confidence_percentage || 'N/A'}`;
+
+                const diagLower = String(rep.doctor_final_diagnosis).toLowerCase();
+                let defaultMultilingual = {
+                    'en': rep.plain_english_explanation || "The scan has been evaluated by the clinical team. Please consult your physician.",
+                    'hi': "स्कैन में संक्रमण या असामान्यता के लक्षण दिखाई दे रहे हैं। कृपया अपने डॉक्टर से परामर्श करें।",
+                    'kn': "ಸ್ಕ್ಯಾನ್‌ನಲ್ಲಿ ಸೋಂಕು ಅಥವಾ ಅಸಹಜತೆಯ ಲಕ್ಷಣಗಳು ಕಂಡುಬಂದಿವೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವೈದ್ಯರೊಂದಿಗೆ ಚರ್ಚಿಸಿ.",
+                    'te': "స్కాన్‌లో ఇన్ఫెక్షన్ లేదా అసాధారణత సంకేతాలు కనిపించాయి. దయచేసి మీ వైద్యుడిని సంప్రదించండి.",
+                    'ta': "ஸ்கேனில் தொற்று அல்லது அசாதாரணமான அறிகுறிகள் காணப்படுகின்றன. தகுந்த சிகிச்சைக்காக மருத்துவரை அணுகவும்."
+                };
+
+                if (diagLower.includes('pneumonia')) {
+                    defaultMultilingual = {
+                        'en': "The scan shows areas of lung consolidation consistent with pneumonia (a chest infection). This can cause symptoms such as fever, cough, and shortness of breath. Please discuss the result with your doctor.",
+                        'hi': "स्कैन में निमोनिया (छाती में संक्रमण) से जुड़े लक्षण दिखाई दे रहे हैं। इसके कारण बुखार, खांसी और सांस लेने में तकलीफ हो सकती है। कृपया अपने डॉक्टर से परामर्श करें।",
+                        'kn': "ಸ್ಕ್ಯಾನ್ ನ್ಯುಮೋನಿಯಾ (ಎದೆ ಸೋಂಕು) ಗೆ ಸಂಬಂಧಿಸಿದ ಲಕ್ಷಣಗಳನ್ನು ತೋರಿಸುತ್ತದೆ. ಇದು ಜ್ವರ, ಕೆಮ್ಮು ಮತ್ತು ಉಸಿರಾಟದ ತೊಂದರೆಯನ್ನು ಉಂಟುಮಾಡಬಹುದು. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವೈದ್ಯರೊಂದಿಗೆ ಚರ್ಚಿಸಿ.",
+                        'te': "స్కాన్ న్యుమోనియా (ఛాతీ ఇన్ఫెక్షన్) కి సంబంధించిన సంకేతాలను చూపుతోంది. దీని వల్ల జ్వరం, దగ్గు మరియు శ్వాస తీసుకోవడంలో ఇబ్బంది కలగవచ్చు. దయచేసి మీ వైద్యుడిని సంప్రదించండి.",
+                        'ta': "ஸ்கேன் நிமோனியா (மார்பு தொற்று) தொடர்பான அறிகுறிகளைக் காட்டுகிறது. இது காய்ச்சல், இருமல் மற்றும் மூச்சுத்திணறலை ஏற்படுத்தக்கூடும். உங்கள் மருத்துவரிடம் கலந்தாலோசிக்கவும்."
+                    };
+                } else if (diagLower.includes('tuberculosis')) {
+                    defaultMultilingual = {
+                        'en': "The scan shows findings in the upper lung regions that may indicate tuberculosis infection. Please follow up with your healthcare provider for diagnostic confirmation and treatment guidance.",
+                        'hi': "स्कैन के ऊपरी फेफड़ों के हिस्से में क्षयरोग (टीबी) संक्रमण के संकेत दिखाई दे रहे हैं। कृपया पुष्टि और उपचार के लिए अपने डॉक्टर से संपर्क करें।",
+                        'kn': "ಉಸಿರಾಟದ ಮೇಲ್ಭಾಗದ ಶ್ವಾಸಕೋಶದಲ್ಲಿ ಕ್ಷಯರೋಗ (ಟಿಬಿ) ಸೋಂಕಿನ ಲಕ್ಷಣಗಳು ಕಂಡುಬಂದಿವೆ. ದಯವಿಟ್ಟು ಹೆಚ್ಚಿನ ವೈದ್ಯಕೀಯ ತಪಾಸಣೆಗಾಗಿ ವೈದ್ಯರನ್ನು ಭೇಟಿ ಮಾಡಿ.",
+                        'te': "ఊపిరితిత్తుల ఎగువ భాగంలో క్షయవ్యాధి (టిబి) ఇన్ఫెక్షన్ సంకేతాలు కనిపించాయి. దయచేసి తదుపరి చికిత్స కోసం మీ వైద్యుడిని సంప్రదించండి.",
+                        'ta': "நுரையீரலின் மேல் பகுதியில் காசநோய் (காசநோய்) தொற்றின் அறிகுறிகள் காணப்படுகின்றன. தகுந்த சிகிச்சைக்காக மருத்துவரை அணுகவும்."
+                    };
+                }
+
+                currentMultilingualExplanations = rep.multilingual_explanations || defaultMultilingual;
+                changeLanguage();
+
+                const rBadge = document.getElementById('patRiskBadge');
+                rBadge.innerText = `Risk Level: ${rep.risk_level}`;
+                rBadge.className = `badge badge-risk-${rep.risk_level.toLowerCase()} fs-7`;
+
+                document.getElementById('downloadPdfBtn').href = `/api/reports/${rep.id}/pdf`;
+            } else {
+                document.getElementById('plainEnglishText').innerText = 'No finalized medical reports available yet.';
+            }
+
+            // Reports History
+            const reports = data.reports || [];
+            const tbody = document.getElementById('patReportsTableBody');
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No reports recorded.</td></tr>';
+            } else {
+                tbody.innerHTML = reports.map(r => `
+                    <tr>
+                        <td><code>${r.report_uuid.substring(0, 8)}</code></td>
+                        <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${r.scan_type}</span></td>
+                        <td>${r.finalized_at || r.created_at}</td>
+                        <td class="fw-bold text-info">${r.doctor_final_diagnosis}</td>
+                        <td><span class="badge badge-risk-${r.risk_level.toLowerCase()}">${r.risk_level}</span></td>
+                        <td class="text-end">
+                            <a href="/api/reports/${r.id}/pdf" class="btn btn-sm btn-success"><i class="fa-solid fa-download"></i> PDF</a>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Timeline Events
+            const timeline = data.timeline || [];
+            const tContainer = document.getElementById('patTimelineList');
+            if (timeline.length === 0) {
+                tContainer.innerHTML = '<div class="text-muted py-2">No timeline events recorded.</div>';
+            } else {
+                tContainer.innerHTML = timeline.map(t => `
+                    <div class="timeline-item">
+                        <div class="fw-bold text-light">${t.title}</div>
+                        <div class="fs-7 text-secondary mb-1">${t.description}</div>
+                        <div class="fs-8 text-muted">${t.event_date}</div>
+                    </div>
+                `).join('');
+            }
+        });
+}
+
+function changeLanguage() {
+    const langSelect = document.getElementById('languageSelect');
+    const selectedLang = langSelect.value;
+
+    const langNames = {
+        'en': 'English',
+        'hi': 'Hindi (हिंदी)',
+        'kn': 'Kannada (ಕನ್ನಡ)',
+        'te': 'Telugu (తెలుగు)',
+        'ta': 'Tamil (தமிழ்)'
+    };
+
+    document.getElementById('langBadge').innerText = langNames[selectedLang] || 'English';
+
+    const text = currentMultilingualExplanations[selectedLang] || currentMultilingualExplanations['en'] || 'Explanation unavailable';
+    document.getElementById('plainEnglishText').innerText = text;
+
+    // Stop voice if currently playing in previous language
+    if (typeof voiceAssistant !== 'undefined' && voiceAssistant.isPlaying) {
+        voiceAssistant.stop();
+    }
+}
+
+function triggerVoiceSpeech() {
+    const selectedLang = document.getElementById('languageSelect').value;
+    toggleVoiceExplanation('plainEnglishText', selectedLang);
+}
+</script>
+{% endblock %}

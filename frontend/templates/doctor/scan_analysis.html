@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}AI Scan Analysis Studio - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-microscope text-primary me-2"></i> Clinical Decision Support Studio</h2>
+        <p class="text-secondary fs-7 m-0">ResNet-50 Feature-Level Fusion Analysis & Explainable AI (LIME / SHAP / Grad-CAM)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/doctor/compare-scans?patient_id={{ scan.patient_id }}" class="btn btn-outline-info btn-sm"><i class="fa-solid fa-code-compare me-1"></i> Compare Scans</a>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#finalizeReportModal"><i class="fa-solid fa-file-signature me-1"></i> Finalize Report</button>
+    </div>
+</div>
+
+<!-- Header Patient & Scan Bar -->
+<div class="card glass-card p-3 mb-4">
+    <div class="row align-items-center g-3">
+        <div class="col-md-3">
+            <span class="fs-7 text-secondary">Patient</span>
+            <h5 class="fw-bold m-0" id="patientNameHeader">{{ scan.patient_name }}</h5>
+            <span class="fs-7 text-muted" id="patientIdHeader">{{ scan.patient_unique_id }}</span>
+        </div>
+        <div class="col-md-2">
+            <span class="fs-7 text-secondary">Modality & Vault</span>
+            <div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6" id="scanTypeHeader">{{ scan.scan_type }}</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle fs-8 ms-1" title="Stored in AES-256 Encrypted Cloud Vault"><i class="fa-solid fa-cloud-arrow-up me-1"></i> AES-256 Cloud</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <span class="fs-7 text-secondary">Primary AI Finding</span>
+            <h5 class="fw-bold text-info m-0" id="primaryPredictionHeader">--</h5>
+            <span class="fs-7 text-muted" id="confidenceHeader">Confidence: --</span>
+        </div>
+        <div class="col-md-2">
+            <span class="fs-7 text-secondary">Assessed Risk Level</span>
+            <div><span class="badge badge-risk-medium fs-6" id="riskBadgeHeader">--</span></div>
+        </div>
+        <div class="col-md-2 text-end">
+            <span class="fs-7 text-secondary">Status</span>
+            <div><span class="badge bg-success fs-7" id="statusBadgeHeader">{{ scan.status }}</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Left Column: Medical Image Viewer & Grad-CAM Heatmap -->
+    <div class="col-12 col-xl-6">
+        <div class="card glass-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0"><i class="fa-solid fa-image text-primary me-2"></i> Medical Scan & Heatmap Viewer</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="viewerMode" id="modeOriginal" checked onchange="toggleViewerMode('original')">
+                    <label class="btn btn-outline-secondary" for="modeOriginal">Original</label>
+                    
+                    <input type="radio" class="btn-check" name="viewerMode" id="modePreprocessed" onchange="toggleViewerMode('preprocessed')">
+                    <label class="btn btn-outline-secondary" for="modePreprocessed">Preprocessed</label>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="viewer-container mb-3 position-relative">
+                <img id="mainScanImg" src="/{{ scan.image_path }}" class="viewer-img" alt="Medical Scan">
+                <img id="gradcamOverlayImg" src="" class="viewer-overlay d-none" style="opacity: 0.6;" alt="Grad-CAM Overlay">
+            </div>
+
+            <!-- Heatmap Opacity Controls -->
+            <div class="p-3 bg-secondary bg-opacity-10 rounded border border-secondary-subtle">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="form-check form-switch m-0">
+                        <input class="form-check-input" type="checkbox" id="toggleHeatmapSwitch" onchange="toggleHeatmapOverlay()">
+                        <label class="form-check-label fw-semibold fs-7" for="toggleHeatmapSwitch"><i class="fa-solid fa-fire text-danger me-1"></i> Grad-CAM Attention Heatmap</label>
+                    </div>
+                    <span class="fs-7 text-muted" id="opacityValLabel">Opacity: 60%</span>
+                </div>
+                <input type="range" class="form-range" id="heatmapOpacitySlider" min="0" max="100" value="60" oninput="updateHeatmapOpacity(this.value)">
+                <div class="fs-7 text-secondary mt-1"><i class="fa-solid fa-info-circle me-1"></i> Highlights spatial regions of highest convolutional neural network activation.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: AI Feature Fusion Predictions & Explainability -->
+    <div class="col-12 col-xl-6">
+        <div class="card glass-card p-4 h-100">
+            <!-- Prediction Softmax Card -->
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-brain text-info me-2"></i> Dual-Branch Feature Fusion Top-3 Predictions</h5>
+                <div id="top3PredictionsContainer" class="d-flex flex-column gap-3">
+                    <div class="text-muted fs-7"><i class="fa-solid fa-circle-notch fa-spin me-2"></i> Computing predictions...</div>
+                </div>
+            </div>
+
+            <hr class="border-secondary my-3">
+
+            <!-- Explainable AI (SHAP & LIME Tabs) -->
+            <ul class="nav nav-pills nav-justified bg-secondary bg-opacity-10 rounded p-1 mb-3" id="xaiTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active btn-sm" data-bs-toggle="tab" data-bs-target="#shapTab"><i class="fa-solid fa-chart-column me-1"></i> SHAP Clinical Factors</button></li>
+                <li class="nav-item"><button class="nav-link btn-sm" data-bs-toggle="tab" data-bs-target="#limeTab"><i class="fa-solid fa-vector-square me-1"></i> LIME Image Regions</button></li>
+                <li class="nav-item"><button class="nav-link btn-sm" data-bs-toggle="tab" data-bs-target="#riskTab"><i class="fa-solid fa-shield-cat me-1"></i> Risk Breakdown</button></li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- SHAP Tab -->
+                <div class="tab-pane fade show active" id="shapTab">
+                    <p class="fs-7 text-secondary mb-2">SHapley Additive exPlanations for Patient Clinical Parameters:</p>
+                    <div id="shapListContainer" class="d-flex flex-column gap-2"></div>
+                </div>
+
+                <!-- LIME Tab -->
+                <div class="tab-pane fade" id="limeTab">
+                    <p class="fs-7 text-secondary mb-2">Local Interpretable Model-agnostic Explanations (Image Segments):</p>
+                    <div id="limeListContainer" class="d-flex flex-column gap-2"></div>
+                </div>
+
+                <!-- Risk Framework Tab -->
+                <div class="tab-pane fade" id="riskTab">
+                    <div class="p-3 bg-secondary bg-opacity-10 rounded border border-secondary-subtle">
+                        <h6 class="fw-bold mb-2">Risk Stratification Factors</h6>
+                        <div id="riskFactorsContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Doctor Clinical Notes & Collaboration Discussion Feed -->
+<div class="card glass-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-comments text-warning me-2"></i> Clinical Collaboration Notes</h5>
+    <div class="row g-3 mb-3">
+        <div class="col-md-9">
+            <input type="text" class="form-control bg-transparent" id="collabNoteInput" placeholder="Add clinical consultation note or second opinion recommendation...">
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-warning w-100" onclick="addCollabNote()"><i class="fa-solid fa-plus me-1"></i> Post Note</button>
+        </div>
+    </div>
+    <div class="list-group list-group-flush bg-transparent" id="collabNotesList"></div>
+</div>
+
+<!-- Modal: Finalize Report -->
+<div class="modal fade" id="finalizeReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content glass-modal border border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-file-signature text-primary me-2"></i> Finalize Doctor Assessment & Generate PDF Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="submitFinalReport(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-7">Doctor's Final Diagnosis *</label>
+                        <input type="text" class="form-control" id="finalDiagnosis" required placeholder="e.g. Right Lower Lobe Pneumonia">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Clinical Findings & Impression</label>
+                        <textarea class="form-control" id="clinicalFinding" rows="2" placeholder="Standard radiological findings summary..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Treatment Recommendations & Follow-Up</label>
+                        <textarea class="form-control" id="treatmentRecommendations" rows="2" placeholder="e.g. Oral antibiotic therapy, follow-up scan in 14 days."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fs-7">Report PDF Template Style</label>
+                        <select class="form-select" id="reportTemplateType">
+                            <option value="Detailed Report" selected>Detailed Report (Full AI & Explainability)</option>
+                            <option value="Summary Report">Summary Report (Executive Brief)</option>
+                            <option value="Radiology Report">Radiology-Style Report (Standard Format)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="finalizeSubmitBtn">Finalize & Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const scanId = {{ scan.id }};
+let scanData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadScanData();
+});
+
+function loadScanData() {
+    fetch(`/api/scans/${scanId}`)
+        .then(r => r.json())
+        .then(data => {
+            scanData = data.scan;
+            renderScanDetails();
+        });
+}
+
+function renderScanDetails() {
+    if (!scanData.ai_result) return;
+    const ai = scanData.ai_result;
+    
+    document.getElementById('primaryPredictionHeader').innerText = ai.primary_prediction;
+    document.getElementById('confidenceHeader').innerText = `Confidence: ${ai.confidence_percentage}`;
+    
+    if (ai.explainability && ai.explainability.gradcam_heatmap_path) {
+        const heatmapImg = document.getElementById('gradcamOverlayImg');
+        heatmapImg.src = '/' + ai.explainability.gradcam_heatmap_path;
+    }
+
+    if (ai.risk_assessment) {
+        const rBadge = document.getElementById('riskBadgeHeader');
+        rBadge.innerText = `Risk Level: ${ai.risk_assessment.risk_level}`;
+        rBadge.className = `badge badge-risk-${ai.risk_assessment.risk_level.toLowerCase()} fs-6`;
+        
+        // Render Risk Factors
+        const rFactors = ai.risk_assessment.contributing_factors || [];
+        document.getElementById('riskFactorsContainer').innerHTML = rFactors.map(f => `
+            <div class="d-flex justify-content-between fs-7 mb-1">
+                <span>${f.factor}</span>
+                <span class="badge bg-danger">${f.weight}</span>
+            </div>
+        `).join('');
+    }
+
+    // Top 3 Predictions Bar
+    const top3 = ai.top3 || [];
+    document.getElementById('top3PredictionsContainer').innerHTML = top3.map((t, idx) => `
+        <div>
+            <div class="d-flex justify-content-between fs-7 fw-semibold mb-1">
+                <span>${idx+1}. ${t.condition}</span>
+                <span class="text-info">${t.percentage}</span>
+            </div>
+            <div class="progress bg-secondary bg-opacity-25" style="height: 10px;">
+                <div class="progress-bar ${idx === 0 ? 'bg-primary' : 'bg-info'}" style="width: ${t.percentage}"></div>
+            </div>
+        </div>
+    `).join('');
+
+    // SHAP Features
+    if (ai.explainability && ai.explainability.shap_values) {
+        const shap = ai.explainability.shap_values.features || [];
+        document.getElementById('shapListContainer').innerHTML = shap.map(s => `
+            <div class="p-2 bg-secondary bg-opacity-10 rounded border border-secondary-subtle fs-7">
+                <div class="d-flex justify-content-between font-semibold">
+                    <span>${s.feature_name}: <b>${s.value}</b></span>
+                    <span class="text-info">+${s.shap_value} SHAP</span>
+                </div>
+                <div class="text-muted fs-8">${s.description}</div>
+            </div>
+        `).join('');
+    }
+
+    // LIME Regions
+    if (ai.explainability && ai.explainability.lime_explanation) {
+        const lime = ai.explainability.lime_explanation.important_regions || [];
+        document.getElementById('limeListContainer').innerHTML = lime.map(l => `
+            <div class="p-2 bg-secondary bg-opacity-10 rounded border border-secondary-subtle fs-7">
+                <div class="d-flex justify-content-between font-semibold">
+                    <span>${l.region}</span>
+                    <span class="${l.weight > 0 ? 'text-success' : 'text-danger'}">${l.weight > 0 ? '+' : ''}${l.weight} LIME</span>
+                </div>
+                <div class="text-muted fs-8">${l.description}</div>
+            </div>
+        `).join('');
+    }
+
+    // Collab Notes
+    renderCollabNotes(scanData.collaboration_notes || []);
+}
+
+function toggleViewerMode(mode) {
+    const mainImg = document.getElementById('mainScanImg');
+    if (mode === 'preprocessed' && scanData.preprocessed_image_path) {
+        mainImg.src = '/' + scanData.preprocessed_image_path;
+    } else {
+        mainImg.src = '/' + scanData.image_path;
+    }
+}
+
+function toggleHeatmapOverlay() {
+    const sw = document.getElementById('toggleHeatmapSwitch');
+    const overlay = document.getElementById('gradcamOverlayImg');
+    if (sw.checked) {
+        overlay.classList.remove('d-none');
+    } else {
+        overlay.classList.add('d-none');
+    }
+}
+
+function updateHeatmapOpacity(val) {
+    document.getElementById('opacityValLabel').innerText = `Opacity: ${val}%`;
+    document.getElementById('gradcamOverlayImg').style.opacity = val / 100.0;
+}
+
+function addCollabNote() {
+    const txt = document.getElementById('collabNoteInput').value;
+    if (!txt) return;
+
+    fetch('/api/collaboration-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scan_id: scanId, note_text: txt })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.note) {
+            document.getElementById('collabNoteInput').value = '';
+            loadScanData();
+        }
+    });
+}
+
+function renderCollabNotes(notes) {
+    const list = document.getElementById('collabNotesList');
+    if (notes.length === 0) {
+        list.innerHTML = '<div class="text-muted fs-7 py-2">No collaboration notes added yet.</div>';
+        return;
+    }
+    list.innerHTML = notes.map(n => `
+        <div class="list-group-item bg-transparent border-secondary text-light fs-7">
+            <div class="d-flex justify-content-between fw-semibold text-warning">
+                <span>Dr. ${n.doctor_name}</span>
+                <span class="text-muted fs-8">${n.created_at}</span>
+            </div>
+            <div>${n.note_text}</div>
+        </div>
+    `).join('');
+}
+
+function submitFinalReport(e) {
+    e.preventDefault();
+    const btn = document.getElementById('finalizeSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Generating PDF Report...';
+
+    const payload = {
+        scan_id: scanId,
+        doctor_final_diagnosis: document.getElementById('finalDiagnosis').value,
+        clinical_finding: document.getElementById('clinicalFinding').value,
+        treatment_recommendations: document.getElementById('treatmentRecommendations').value,
+        template_type: document.getElementById('reportTemplateType').value
+    };
+
+    fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.report) {
+            showAlert('Report finalized successfully!', 'success');
+            window.location.href = `/api/reports/${data.report.id}/pdf`;
+        } else {
+            showAlert(data.message || data.error, 'danger');
+            btn.disabled = false;
+        }
+    });
+}
+</script>
+{% endblock %}

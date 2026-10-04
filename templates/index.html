@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Hero Section -->
+  <div class="row align-items-center mb-5">
+    <div class="col-lg-7">
+      <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 px-3 py-2 rounded-pill mb-3">
+        Phase 1: Project Scaffolding & Foundation Ready
+      </span>
+      <h1 class="display-4 fw-bold mb-3 text-gradient">
+        MediScan
+      </h1>
+      <h2 class="h4 text-light text-opacity-75 mb-4">
+        Clinical Context Integration in Medical Imaging
+      </h2>
+      <p class="lead text-muted mb-4">
+        An advanced AI-assisted decision-support web application integrating multimodal medical imaging features (Chest X-Ray, CT, MRI) with structured patient clinical data using feature-level fusion, explainable AI (Grad-CAM, LIME, SHAP), and role-based clinical workflows.
+      </p>
+      
+      <div class="d-flex flex-wrap gap-3 mb-4">
+        <a href="/dashboard/doctor" class="btn btn-primary btn-lg px-4 shadow">
+          Doctor Dashboard
+        </a>
+        <a href="/dashboard/patient" class="btn btn-outline-light btn-lg px-4">
+          Patient Dashboard
+        </a>
+        <a href="/dashboard/admin" class="btn btn-outline-secondary btn-lg px-4">
+          Admin Dashboard
+        </a>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card bg-dark border border-secondary border-opacity-50 shadow-lg p-3">
+        <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+          <h5 class="card-title text-light mb-0">API Connection Status</h5>
+          <span class="badge bg-success" id="connection-status-tag">Connected</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-2">Live Response from <code>GET /api/health</code>:</p>
+          <pre class="bg-black text-success p-3 rounded small font-monospace overflow-auto" id="health-json-box">Loading health metrics...</pre>
+          <button class="btn btn-sm btn-outline-info w-100" id="btn-refresh-health">
+            Refresh API Connection Status
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="border-secondary border-opacity-25 my-5">
+
+  <!-- Unified Application Interfaces -->
+  <div class="row mb-5">
+    <div class="col-12 text-center mb-4">
+      <h3 class="fw-bold text-light">Unified Web Application Interfaces</h3>
+      <p class="text-muted">All user role dashboards run securely within the same MediScan core application.</p>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card bg-dark border-secondary border-opacity-25 h-100 p-3 card-hover">
+        <div class="card-body">
+          <h5 class="card-title text-primary">Doctor Dashboard</h5>
+          <p class="card-text text-muted small">Scan studio, clinical context viewer, SHAP/LIME graph visualizer, and diagnostic review sign-off panel.</p>
+          <a href="/dashboard/doctor" class="btn btn-sm btn-outline-primary mt-2">Access Studio &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card bg-dark border-secondary border-opacity-25 h-100 p-3 card-hover">
+        <div class="card-body">
+          <h5 class="card-title text-info">Patient Dashboard</h5>
+          <p class="card-text text-muted small">Tenant-isolated view (`WHERE patient.user_id = current_user.id`), medical journey timeline, plain-language summaries, audio explanations.</p>
+          <a href="/dashboard/patient" class="btn btn-sm btn-outline-info mt-2">Access Portal &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card bg-dark border-secondary border-opacity-25 h-100 p-3 card-hover">
+        <div class="card-body">
+          <h5 class="card-title text-warning">Admin Dashboard</h5>
+          <p class="card-text text-muted small">User account CRUD, RBAC role management, hospital facility configuration, and searchable system Audit Logs.</p>
+          <a href="/dashboard/admin" class="btn btn-sm btn-outline-warning mt-2">Access Admin &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card bg-dark border-secondary border-opacity-25 h-100 p-3 card-hover">
+        <div class="card-body">
+          <h5 class="card-title text-secondary">Viewer Interface</h5>
+          <p class="card-text text-muted small">Read-only authorized consultation access for external medical specialists.</p>
+          <a href="/interface/viewer" class="btn btn-sm btn-outline-secondary mt-2">Access Viewer &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multimodal Pipeline Summary -->
+  <div class="row" id="architecture">
+    <div class="col-12">
+      <div class="p-4 rounded bg-dark border border-secondary border-opacity-25">
+        <h4 class="fw-bold text-light mb-3">Multimodal AI Feature-Level Fusion Architecture</h4>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 small">
+            <thead>
+              <tr class="table-active">
+                <th>Sub-Network</th>
+                <th>Input Type</th>
+                <th>Processing Engine</th>
+                <th>Feature Vector Output</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Image Pipeline</strong></td>
+                <td>Chest X-Ray / CT / MRI</td>
+                <td>OpenCV Preprocessing (CLAHE) + ResNet-50</td>
+                <td>2048-dim Image Vector ($F_{\text{img}}$)</td>
+              </tr>
+              <tr>
+                <td><strong>Clinical Pipeline</strong></td>
+                <td>Vitals, Lab Values, History</td>
+                <td>StandardScaler Normalization + Clinical MLP</td>
+                <td>128-dim Clinical Vector ($F_{\text{clin}}$)</td>
+              </tr>
+              <tr>
+                <td><strong>Integration Layer</strong></td>
+                <td>Combined Vectors</td>
+                <td>Feature-Level Fusion Layer</td>
+                <td>2176-dim Fused Vector ($F_{\text{fused}}$)</td>
+              </tr>
+              <tr>
+                <td><strong>Explainability Suite</strong></td>
+                <td>Model Bottlenecks</td>
+                <td>Grad-CAM Heatmaps + LIME + SHAP Graphs</td>
+                <td>Multimodal Visual & Tabular Impact</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

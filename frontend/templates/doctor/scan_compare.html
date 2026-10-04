@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Comparison Tool - MediScan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-code-compare text-info me-2"></i> Medical Scan Comparison Tool</h2>
+        <p class="text-secondary fs-7 m-0">Side-by-Side Radiological & AI Assessment Comparison</p>
+    </div>
+    <a href="/doctor/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Return to Dashboard</a>
+</div>
+
+<div class="card glass-card p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fs-7 fw-semibold">Select Primary Scan (Scan A)</label>
+            <select class="form-select bg-transparent" id="scanSelect1" onchange="fetchComparisonData()">
+                <option value="">-- Choose Scan A --</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label fs-7 fw-semibold">Select Comparison Scan (Scan B)</label>
+            <select class="form-select bg-transparent" id="scanSelect2" onchange="fetchComparisonData()">
+                <option value="">-- Choose Scan B --</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-info w-100" onclick="fetchComparisonData()"><i class="fa-solid fa-arrows-rotate me-1"></i> Compare</button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4" id="comparisonContainer">
+    <!-- Scan A Display Card -->
+    <div class="col-12 col-md-6">
+        <div class="card glass-card p-4 text-center">
+            <h5 class="fw-bold text-primary mb-3" id="titleScanA">Scan A (Baseline)</h5>
+            <div class="viewer-container mb-3">
+                <img id="imgScanA" src="" class="viewer-img" alt="Scan A">
+            </div>
+            <div class="p-3 bg-secondary bg-opacity-10 rounded text-start fs-7">
+                <div><b>Scan Date:</b> <span id="dateScanA">--</span></div>
+                <div><b>Scan Modality:</b> <span id="typeScanA">--</span></div>
+                <div><b>AI Prediction:</b> <span id="predScanA" class="text-info fw-bold">--</span></div>
+                <div><b>Confidence Score:</b> <span id="confScanA">--</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan B Display Card -->
+    <div class="col-12 col-md-6">
+        <div class="card glass-card p-4 text-center">
+            <h5 class="fw-bold text-info mb-3" id="titleScanB">Scan B (Follow-up)</h5>
+            <div class="viewer-container mb-3">
+                <img id="imgScanB" src="" class="viewer-img" alt="Scan B">
+            </div>
+            <div class="p-3 bg-secondary bg-opacity-10 rounded text-start fs-7">
+                <div><b>Scan Date:</b> <span id="dateScanB">--</span></div>
+                <div><b>Scan Modality:</b> <span id="typeScanB">--</span></div>
+                <div><b>AI Prediction:</b> <span id="predScanB" class="text-info fw-bold">--</span></div>
+                <div><b>Confidence Score:</b> <span id="confScanB">--</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadScanOptions();
+});
+
+function loadScanOptions() {
+    fetch('/api/scans')
+        .then(r => r.json())
+        .then(data => {
+            const scans = data.scans || [];
+            const opts = scans.map(s => `<option value="${s.id}">Scan #${s.id} - ${s.patient_name} (${s.scan_type}, ${s.uploaded_at})</option>`).join('');
+            
+            document.getElementById('scanSelect1').innerHTML = '<option value="">-- Choose Scan A --</option>' + opts;
+            document.getElementById('scanSelect2').innerHTML = '<option value="">-- Choose Scan B --</option>' + opts;
+
+            if (scans.length >= 2) {
+                document.getElementById('scanSelect1').value = scans[0].id;
+                document.getElementById('scanSelect2').value = scans[1].id;
+                fetchComparisonData();
+            }
+        });
+}
+
+function fetchComparisonData() {
+    const id1 = document.getElementById('scanSelect1').value;
+    const id2 = document.getElementById('scanSelect2').value;
+    if (!id1 || !id2) return;
+
+    fetch(`/api/scans/compare?scan1_id=${id1}&scan2_id=${id2}`)
+        .then(r => r.json())
+        .then(data => {
+            const s1 = data.scan1;
+            const s2 = data.scan2;
+
+            // Render A
+            document.getElementById('titleScanA').innerText = `Scan #${s1.id} - ${s1.patient_name}`;
+            document.getElementById('imgScanA').src = '/' + s1.image_path;
+            document.getElementById('dateScanA').innerText = s1.uploaded_at;
+            document.getElementById('typeScanA').innerText = s1.scan_type;
+            document.getElementById('predScanA').innerText = data.scan1_ai ? data.scan1_ai.primary_prediction : 'N/A';
+            document.getElementById('confScanA').innerText = data.scan1_ai ? data.scan1_ai.confidence_percentage : 'N/A';
+
+            // Render B
+            document.getElementById('titleScanB').innerText = `Scan #${s2.id} - ${s2.patient_name}`;
+            document.getElementById('imgScanB').src = '/' + s2.image_path;
+            document.getElementById('dateScanB').innerText = s2.uploaded_at;
+            document.getElementById('typeScanB').innerText = s2.scan_type;
+            document.getElementById('predScanB').innerText = data.scan2_ai ? data.scan2_ai.primary_prediction : 'N/A';
+            document.getElementById('confScanB').innerText = data.scan2_ai ? data.scan2_ai.confidence_percentage : 'N/A';
+        });
+}
+</script>
+{% endblock %}

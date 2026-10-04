@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Register Account - MediScan Medical Decision Support{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75 py-5">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card glass-card p-4 p-md-5 shadow-lg border border-secondary border-opacity-25">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
+                    <i class="fa-solid fa-user-plus fa-2x"></i>
+                </div>
+                <h3 class="fw-bold">Create a MediScan Account</h3>
+                <p class="text-secondary fs-7">Register a new Doctor, Patient, or Viewer account</p>
+            </div>
+
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="fullName" class="form-label fs-7 fw-medium">Full Name *</label>
+                        <input type="text" class="form-control bg-transparent border-secondary-subtle" id="fullName" required placeholder="Dr. Rajesh Kumar or Priya Sharma">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="regRole" class="form-label fs-7 fw-medium">Account Role *</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="regRole" required onchange="toggleRoleFields()">
+                            <option value="PATIENT" selected>Patient</option>
+                            <option value="DOCTOR">Doctor / Radiologist</option>
+                            <option value="VIEWER">Medical Viewer</option>
+                            <option value="ADMIN">System Administrator</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="email" class="form-label fs-7 fw-medium">Email Address *</label>
+                        <input type="email" class="form-control bg-transparent border-secondary-subtle" id="email" required placeholder="name@example.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label fs-7 fw-medium">Phone Number</label>
+                        <input type="tel" class="form-control bg-transparent border-secondary-subtle" id="phone" placeholder="+91 98765 43210">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label fs-7 fw-medium">Password *</label>
+                    <input type="password" class="form-control bg-transparent border-secondary-subtle" id="password" required placeholder="Minimum 6 characters">
+                </div>
+
+                <!-- Patient Specific Fields -->
+                <div id="patientFields" class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="dob" class="form-label fs-7 fw-medium">Date of Birth</label>
+                        <input type="date" class="form-control bg-transparent border-secondary-subtle" id="dob" value="1990-05-15">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="gender" class="form-label fs-7 fw-medium">Gender</label>
+                        <select class="form-select bg-transparent border-secondary-subtle" id="gender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bloodGroup" class="form-label fs-7 fw-medium">Blood Group</label>
+                        <input type="text" class="form-control bg-transparent border-secondary-subtle" id="bloodGroup" placeholder="O+">
+                    </div>
+                </div>
+
+                <!-- Doctor Specific Fields -->
+                <div id="doctorFields" class="row g-3 mb-3 d-none">
+                    <div class="col-md-6">
+                        <label for="licenseNumber" class="form-label fs-7 fw-medium">Medical License Number</label>
+                        <input type="text" class="form-control bg-transparent border-secondary-subtle" id="licenseNumber" placeholder="MCI-12345">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="specialization" class="form-label fs-7 fw-medium">Specialization</label>
+                        <input type="text" class="form-control bg-transparent border-secondary-subtle" id="specialization" placeholder="Radiology / Pulmonology">
+                    </div>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary py-2 fw-semibold" id="regBtn">
+                        <i class="fa-solid fa-user-plus me-2"></i> Register Account & Sign In
+                    </button>
+                </div>
+
+                <div class="text-center fs-7 text-secondary">
+                    Already have an account? <a href="/login" class="text-primary fw-semibold">Sign In Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleRoleFields() {
+    const role = document.getElementById('regRole').value;
+    const pFields = document.getElementById('patientFields');
+    const dFields = document.getElementById('doctorFields');
+
+    if (role === 'PATIENT') {
+        pFields.classList.remove('d-none');
+        dFields.classList.add('d-none');
+    } else if (role === 'DOCTOR') {
+        pFields.classList.add('d-none');
+        dFields.classList.remove('d-none');
+    } else {
+        pFields.classList.add('d-none');
+        dFields.classList.add('d-none');
+    }
+}
+
+function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('regBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i> Registering Account...';
+
+    const payload = {
+        full_name: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        role_name: document.getElementById('regRole').value,
+        phone: document.getElementById('phone').value,
+        dob: document.getElementById('dob').value,
+        gender: document.getElementById('gender').value,
+        blood_group: document.getElementById('bloodGroup').value,
+        license_number: document.getElementById('licenseNumber').value,
+        specialization: document.getElementById('specialization').value
+    };
+
+    fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.redirect_url) {
+            const patientMessage = data.patient_id ? ` Patient ID: ${data.patient_id}. Save this ID for portal login.` : '';
+            showAlert(`Registration successful!${patientMessage} Redirecting...`, 'success');
+            setTimeout(() => { window.location.href = data.redirect_url; }, 1000);
+        } else {
+            showAlert(data.message || data.error, 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus me-2"></i> Register Account & Sign In';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showAlert('Registration request failed.', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus me-2"></i> Register Account & Sign In';
+    });
+}
+</script>
+{% endblock %}
